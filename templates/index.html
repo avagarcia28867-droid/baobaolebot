@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红包机器人管理后台</title>
+    <!-- 引入 Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { 
+            background-color: #f4f6f9; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+        }
+        .main-container { 
+            max-width: 1280px; 
+            margin: 20px auto; 
+            padding: 0 15px;
+        }
+        
+        /* 卡片样式优化：增加实线边框 */
+        .card { 
+            border: 1px solid #dcdcdc; /* 明显的边框 */
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
+            background: white; 
+            margin-bottom: 20px; 
+        }
+        .card-header { 
+            background: #f8f9fa; 
+            border-bottom: 1px solid #dcdcdc; /* 标题栏分割线 */
+            padding: 12px 20px; 
+            font-weight: 600; 
+            color: #495057;
+            border-radius: 8px 8px 0 0 !important; 
+        }
+
+        /* 表格样式优化：增加网格线 */
+        .table { 
+            margin-bottom: 0; 
+            border: 1px solid #dee2e6; /* 表格整体边框 */
+        }
+        .table th { 
+            background-color: #e9ecef; /* 表头颜色加深 */
+            color: #333; 
+            font-weight: 600; 
+            border-bottom: 2px solid #adb5bd;
+            border-right: 1px solid #dee2e6; /* 列分割线 */
+            vertical-align: middle;
+            text-align: center;
+        }
+        .table td { 
+            vertical-align: middle; 
+            padding: 10px; 
+            border-right: 1px solid #dee2e6; /* 列分割线 */
+            text-align: center;
+        }
+        .table-hover tbody tr:hover { 
+            background-color: #f1f3f5; 
+        }
+        
+        /* 状态标签 */
+        .badge-status { padding: 6px 10px; border-radius: 4px; font-weight: normal; font-size: 0.85em; }
+        .bg-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .bg-completed, .bg-approved { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .bg-rejected, .bg-expired { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+
+        /* 金额颜色 */
+        .text-in { color: #198754; font-weight: 700; }
+        .text-out { color: #dc3545; font-weight: 700; }
+
+        /* 导航栏 */
+        .nav-pills .nav-link {
+            border: 1px solid transparent;
+            color: #555;
+            margin-right: 5px;
+            font-weight: 500;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+            border: 1px solid #0a58ca;
+        }
+        .nav-pills .nav-link:hover:not(.active) {
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- 顶部标题栏 -->
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded border shadow-sm">
+        <div class="d-flex align-items-center">
+            <span style="font-size: 1.8rem; margin-right: 10px;">🤖</span>
+            <h4 class="mb-0 fw-bold text-dark">机器人管理系统</h4>
+        </div>
+        <div>
+            <span class="badge bg-secondary me-2 p-2"><i class="bi bi-shield-lock"></i> Admin</span>
+            <!-- 修复：使用 location.reload() 刷新当前页，而不是跳转 -->
+            <button onclick="location.reload()" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-clockwise"></i> 刷新页面
+            </button>
+        </div>
+    </div>
+
+    <!-- 导航标签 -->
+    <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-users"><i class="bi bi-people"></i> 用户 & 流水</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-deposits"><i class="bi bi-wallet2"></i> 充值管理</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-withdrawals"><i class="bi bi-cash-coin"></i> 提现管理</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- 1. 用户列表 -->
+        <div class="tab-pane fade show active" id="pills-users">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-list-ul"></i> 用户列表</span>
+                    <button class="btn btn-sm btn-primary" onclick="loadUsers()">🔄 刷新列表</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <!-- 增加 table-bordered 和 table-striped -->
+                        <table class="table table-bordered table-striped table-hover mb-0">
+                            <thead><tr><th>UID</th><th>用户名</th><th>余额 (USDT)</th><th>钱包地址</th><th>操作</th></tr></thead>
+                            <tbody id="users-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 充值订单 -->
+        <div class="tab-pane fade" id="pills-deposits">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-clock-history"></i> 充值订单 (最新)</span>
+                    <button class="btn btn-sm btn-primary" onclick="loadDeposits()">🔄 刷新列表</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover mb-0">
+                            <thead><tr><th>ID</th><th>创建时间</th><th>用户ID</th><th>金额 (U)</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody id="deposits-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 提现请求 -->
+        <div class="tab-pane fade" id="pills-withdrawals">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-box-arrow-up"></i> 提现请求</span>
+                    <button class="btn btn-sm btn-primary" onclick="loadWithdrawals()">🔄 刷新列表</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover mb-0">
+                            <thead><tr><th>ID</th><th>用户ID</th><th>提现金额</th><th>提现地址</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody id="withdrawals-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 流水详情 Modal -->
+<div class="modal fade" id="txModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-receipt"></i> 资金流水明细</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 bg-white border-bottom">
+                    <b>当前用户 ID:</b> <span id="modal-uid" class="text-primary fw-bold"></span>
+                </div>
+                <table class="table table-bordered table-striped table-sm mb-0">
+                    <thead><tr class="table-secondary"><th>时间</th><th>类型</th><th>变动金额</th><th>备注</th></tr></thead>
+                    <tbody id="tx-table-body"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = "/api";
+    
+    // 操作API
+    async function postAction(url, body) {
+        if(!confirm("⚠️ 确定要执行此操作吗？")) return;
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if(res.ok) { 
+                alert(data.message || "操作成功"); 
+                loadUsers(); loadDeposits(); loadWithdrawals();
+            } else { 
+                alert("❌ " + data.detail); 
+            }
+        } catch(e) { alert("网络错误"); }
+    }
+
+    // 加载用户
+    async function loadUsers() {
+        const res = await fetch(`${API}/users`);
+        const data = await res.json();
+        const html = data.map(u => `
+            <tr>
+                <td><code>${u.tg_id}</code></td>
+                <td>${u.username || '-'}</td>
+                <td class="fw-bold text-dark">${u.balance.toFixed(2)}</td>
+                <td><small class="text-muted font-monospace">${u.wallet_address ? u.wallet_address.substring(0,10)+'...' : '未绑定'}</small></td>
+                <td><button class="btn btn-sm btn-outline-info" onclick="viewTx(${u.tg_id})"><i class="bi bi-file-text"></i> 流水</button></td>
+            </tr>
+        `).join('');
+        document.getElementById('users-table').innerHTML = html || '<tr><td colspan="5" class="text-center text-muted py-3">暂无数据</td></tr>';
+    }
+
+    // 加载充值
+    async function loadDeposits() {
+        const res = await fetch(`${API}/deposits`);
+        const data = await res.json();
+        const html = data.map(d => {
+            let btns = '-';
+            if(d.status === 'pending') {
+                btns = `
+                    <button class="btn btn-sm btn-success me-1" onclick="postAction('${API}/handle_deposit/${d.id}', {action:'approve'})"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="postAction('${API}/handle_deposit/${d.id}', {action:'reject'})"><i class="bi bi-x-lg"></i></button>
+                `;
+            }
+            return `
+            <tr>
+                <td>${d.id}</td>
+                <td style="font-size:0.9em">${d.created_at}</td>
+                <td>${d.user_id}</td>
+                <td class="fw-bold text-primary">${d.real_pay.toFixed(2)}</td>
+                <td><span class="badge badge-status bg-${d.status}">${d.status}</span></td>
+                <td>${btns}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('deposits-table').innerHTML = html || '<tr><td colspan="6" class="text-center text-muted py-3">暂无订单</td></tr>';
+    }
+
+    // 加载提现
+    async function loadWithdrawals() {
+        const res = await fetch(`${API}/withdrawals`);
+        const data = await res.json();
+        const html = data.map(w => {
+            let btns = '-';
+            if(w.status === 'pending') {
+                btns = `
+                    <button class="btn btn-sm btn-success me-1" onclick="postAction('${API}/handle_withdrawal/${w.id}', {action:'approve'})"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="postAction('${API}/handle_withdrawal/${w.id}', {action:'reject'})"><i class="bi bi-x-lg"></i></button>
+                `;
+            }
+            return `
+            <tr>
+                <td>${w.id}</td>
+                <td>${w.user_id}</td>
+                <td class="fw-bold text-danger">${w.amount.toFixed(2)}</td>
+                <td style="font-size:0.9em">${w.wallet_address}</td>
+                <td><span class="badge badge-status bg-${w.status}">${w.status}</span></td>
+                <td>${btns}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('withdrawals-table').innerHTML = html || '<tr><td colspan="6" class="text-center text-muted py-3">暂无请求</td></tr>';
+    }
+
+    // 查看流水 (弹窗)
+    async function viewTx(uid) {
+        document.getElementById('modal-uid').innerText = uid;
+        // 清空旧数据
+        document.getElementById('tx-table-body').innerHTML = '<tr><td colspan="4" class="text-center">加载中...</td></tr>';
+        
+        try {
+            const res = await fetch(`${API}/transactions/${uid}`);
+            const data = await res.json();
+            
+            const html = data.map(tx => {
+                const isInc = tx.amount > 0;
+                return `
+                <tr>
+                    <td style="font-size:0.9em">${tx.time}</td>
+                    <td>${tx.type}</td>
+                    <td class="${isInc ? 'text-in' : 'text-out'}">${isInc ? '+' : ''}${tx.amount.toFixed(2)}</td>
+                    <td style="font-size:0.9em">${tx.note || '-'}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('tx-table-body').innerHTML = html || '<tr><td colspan="4" class="text-center py-3">暂无流水</td></tr>';
+        } catch(e) {
+            document.getElementById('tx-table-body').innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载失败</td></tr>';
+        }
+        
+        new bootstrap.Modal(document.getElementById('txModal')).show();
+    }
+
+    // 初始化
+    loadUsers(); loadDeposits(); loadWithdrawals();
+</script>
+</body>
+</html>

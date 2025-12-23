@@ -1,0 +1,9 @@
+aiogram
+fastapi
+uvicorn
+sqlalchemy
+asyncpg
+python-dotenv
+httpx
+jinja2
+python-multipart
