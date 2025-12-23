@@ -1,15 +1,15 @@
 app = "baobaolebot"
-primary_region = "sin" # 👈 这里强制改为新加坡
+primary_region = "sin"
 
 [build]
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = false # 👈 禁止休眠
+  auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
   processes = ["app"]
 
-[swap_size_mb]
-  size = 512
+# 🔥 修正点：直接写成一行，去掉方括号和 size =
+swap_size_mb = 512
