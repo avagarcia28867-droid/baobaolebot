@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 import random
-import sys
+import sys  
 import json
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, Router, F
@@ -334,4 +334,5 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+
     asyncio.run(main())
