@@ -1,15 +1,22 @@
 app = "baobaolebot"
 primary_region = "sin"
 
+# 🔥 核心修复1：直接设置为整数，解决之前的 "cannot unmarshal object" 报错
+swap_size_mb = 512
+
 [build]
 
 [http_service]
   internal_port = 8080
   force_https = true
+  # 🔥 核心修复2：禁止休眠，防止机器人睡着
   auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
   processes = ["app"]
 
-# 🔥 修正点：直接写成一行，去掉方括号和 size =
-swap_size_mb = 512
+# 🔥 核心修复3：强制升级物理内存到 512MB (默认是256MB，不够跑3个进程)
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
